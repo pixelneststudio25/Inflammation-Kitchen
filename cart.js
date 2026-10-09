@@ -3,9 +3,9 @@ var WHATSAPP = '2347036071865', CART_KEY = 'ik_cart_v1', INFO_KEY = 'ik_info_v1'
 /* Menu data. "notice" = hours of advance notice needed (0 = same day). The admin panel will replace this later. */
 var MENU = {
   platters: [
-    { id:'platter-x', name:'X (Standard)', price:45000, notice:0, img:'images/platter-standard.jpg', items:['5 bole','Yam','Chicken','Turkey'] },
-    { id:'platter-xx', name:'Xx (Supreme)', price:82000, notice:0, tag:'Most shared', img:'images/platter-supreme.jpg', items:['8 bole','Yam','Chicken','Turkey','Suya','Goat meat'] },
-    { id:'platter-grammy', name:'Grammy Standard', price:150000, notice:0, img:'images/platter-grammy.jpg', items:['12 bole','Yam','Chicken','Turkey','Suya','Goat meat','Snail'] }
+    { id:'platter-x', name:'X (Standard)', price:45000, notice:0, img:'images/platter-standard.png', items:['5 bole','Yam','Chicken','Turkey'] },
+    { id:'platter-xx', name:'Xx (Supreme)', price:82000, notice:0, tag:'Most shared', img:'images/platter-supreme.png', items:['8 bole','Yam','Chicken','Turkey','Suya','Goat meat'] },
+    { id:'platter-grammy', name:'Grammy Standard', price:150000, notice:0, img:'images/platter-grammy.png', items:['12 bole','Yam','Chicken','Turkey','Suya','Goat meat','Snail'] }
   ],
   combos: [
     { base:'Bole', sub:'Roasted plantain', price:15000, notice:0, proteins:['Chicken','Turkey','Suya','Goat Meat','Snail'] },
