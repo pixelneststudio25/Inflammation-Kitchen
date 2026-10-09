@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Inflammation Kitchen: Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body{background:#F6F7F6}
+  .login{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:22px}
+  .login .card{max-width:360px;width:100%;display:flex;flex-direction:column;gap:14px;text-align:center}
+  .login img{height:44px;margin:0 auto}
+  .bar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .bar b{font:700 1.1rem 'Fraunces',serif;color:var(--green)}
+  .bar .st{font-size:.8rem;color:var(--ink-2)}.bar .st.dirty{color:var(--red);font-weight:700}
+  .acts{display:flex;gap:8px}
+  .sm{padding:10px 18px;border-radius:999px;border:1.5px solid var(--green);background:#fff;color:var(--green);font-weight:700;font-size:.85rem}
+  .sm:hover{background:var(--green);color:#fff}
+  .pub{background:var(--red);border-color:var(--red);color:#fff}.pub:hover{background:var(--red-d);border-color:var(--red-d)}
+  main.ad{max-width:760px;margin:0 auto;padding:20px 16px 120px;display:flex;flex-direction:column;gap:16px}
+  main.ad h2{font-size:1.25rem;color:var(--green);margin-top:10px}
+  .g{display:grid;gap:12px}
+  @media(min-width:560px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}}
+  .f{display:flex;flex-direction:column;gap:5px;font-size:.8rem;font-weight:700}
+  .f input[type=text],.f input[type=number],.f input[type=time],.f input[type=email],.f input[type=password],.f textarea{padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:400 .95rem 'DM Sans',sans-serif;width:100%}
+  .f textarea{min-height:100px;resize:vertical}
+  .ck{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.85rem}.ck input{width:18px;height:18px;accent-color:var(--red)}
+  .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .hd h3{font-size:1.1rem}
+  .x{background:none;border:0;color:var(--red);font-weight:700;font-size:.85rem}
+  .pr{display:flex;align-items:center;gap:8px;margin-bottom:8px}.pr input[type=text]{flex:1}
+  .msg{padding:10px 14px;border-radius:10px;font-size:.85rem;font-weight:700;display:none}.msg.show{display:block}
+  .msg.ok{background:#E8F3EC;color:var(--green)}.msg.er{background:#FBE9E6;color:var(--red)}
+  .hint{font-size:.8rem;color:var(--ink-2);font-weight:400}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="card">
+    <img src="images/inflammation-kitchen-logo.png" alt="Inflammation Kitchen">
+    <h3>Admin access</h3>
+    <label class="f"><span>Email</span><input type="email" id="em" autocomplete="username"></label>
+    <label class="f"><span>Password</span><input type="password" id="pw" autocomplete="current-password"></label>
+    <button class="btn" id="go">Log in</button>
+    <p class="err" id="lerr" hidden></p>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <div class="bar">
+    <div><b>Menu admin</b><div class="st" id="st">Loading</div></div>
+    <div class="acts"><button class="sm" id="save">Save draft</button><button class="sm pub" id="publish">Publish</button><button class="sm" id="out">Log out</button></div>
+  </div>
+  <main class="ad" id="root"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="menu-data.js"></script>
+<script>
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var state = null, dirty = false;
+var $ = function(id){ return document.getElementById(id); };
+
+function flag(t, c){ var s = $('st'); s.textContent = t; s.className = 'st' + (c ? ' ' + c : ''); }
+function markDirty(){ dirty = true; flag('Unsaved changes', 'dirty'); }
+function setP(path, v){ var k = path.split('.'), o = state; for(var i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = v; }
+function a(p, t){ return ' data-p="' + p + '"' + (t ? ' data-t="' + t + '"' : ''); }
+function txt(label, p, v, t){ return '<label class="f"><span>' + label + '</span><input type="' + (t === 'num' ? 'number' : t === 'time' ? 'time' : 'text') + '"' + a(p, t) + ' value="' + esc(v) + '"></label>'; }
+function ck(label, p, v){ return '<label class="ck"><input type="checkbox"' + a(p, 'bool') + (v ? ' checked' : '') + '> ' + label + '</label>'; }
+
+function render(){
+  var s = state.settings, h = '';
+  h += '<h2>Opening and orders</h2><div class="card g g2">' + txt('Opens', 'settings.open', s.open, 'time') + txt('Closes', 'settings.close', s.close, 'time') +
+    '<div class="g" style="grid-column:1/-1">' + ck('Pause orders (customers can browse but not send an order)', 'settings.paused', s.paused) + txt('Message shown while paused', 'settings.pauseMessage', s.pauseMessage) + '</div></div>';
+
+  h += '<h2>Platters</h2>';
+  state.platters.forEach(function(p, i){
+    var b = 'platters.' + i + '.';
+    h += '<div class="card"><div class="hd"><h3>' + esc(p.name || 'New platter') + '</h3><button class="x" data-a="dp" data-i="' + i + '">Delete</button></div><div class="g g2">' +
+      txt('Name', b + 'name', p.name) + txt('Price (\u20A6)', b + 'price', p.price, 'num') + txt('Notice needed (hours, 0 = same day)', b + 'notice', p.notice, 'num') + txt('Ribbon label (optional)', b + 'tag', p.tag) +
+      txt('Image file', b + 'img', p.img) + '<div class="g" style="align-content:end">' + ck('Sold out', b + 'soldOut', p.soldOut) + '</div></div>' +
+      '<label class="f" style="margin-top:12px"><span>What\'s inside (one per line)</span><textarea' + a(b + 'items', 'lines') + '>' + esc((p.items || []).join('\n')) + '</textarea></label></div>';
+  });
+  h += '<button class="sm" data-a="ap">+ Add platter</button>';
+
+  h += '<h2>Combos</h2>';
+  state.combos.forEach(function(c, i){
+    var b = 'combos.' + i + '.';
+    h += '<div class="card"><div class="hd"><h3>' + esc(c.base || 'New combo') + ' combo</h3><button class="x" data-a="dc" data-i="' + i + '">Delete</button></div><div class="g g3">' +
+      txt('Base name', b + 'base', c.base) + txt('Price (\u20A6)', b + 'price', c.price, 'num') + txt('Notice (hours)', b + 'notice', c.notice, 'num') + '</div>' +
+      '<div style="margin-top:12px">' + txt('Short description', b + 'sub', c.sub) + '</div><p class="hint" style="margin:14px 0 8px">Proteins (tick Sold out to hide one for today)</p>';
+    c.proteins.forEach(function(p, j){
+      h += '<div class="pr"><input type="text"' + a(b + 'proteins.' + j + '.name') + ' value="' + esc(p.name) + '">' + ck('Sold out', b + 'proteins.' + j + '.soldOut', p.soldOut) + '<button class="x" data-a="dr" data-i="' + i + '" data-j="' + j + '">\u2715</button></div>';
+    });
+    h += '<button class="sm" data-a="ar" data-i="' + i + '">+ Add protein</button></div>';
+  });
+  h += '<button class="sm" data-a="ac">+ Add combo</button><div class="msg" id="msg"></div>';
+  $('root').innerHTML = h;
+}
+
+function msg(t, ok){ var m = $('msg') || {}; if(!m.classList) return; m.textContent = t; m.className = 'msg show ' + (ok ? 'ok' : 'er'); setTimeout(function(){ m.classList.remove('show'); }, 4500); }
+
+$('root').addEventListener('input', function(e){
+  var t = e.target; if(!t.dataset.p) return;
+  var v = t.type === 'checkbox' ? t.checked : t.dataset.t === 'num' ? (Number(t.value) || 0) : t.dataset.t === 'lines' ? t.value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean) : t.value;
+  setP(t.dataset.p, v); markDirty();
+});
+$('root').addEventListener('click', function(e){
+  var b = e.target.closest('[data-a]'); if(!b) return;
+  var x = b.dataset.a, i = +b.dataset.i, j = +b.dataset.j;
+  if(x === 'ap') state.platters.push({ id:'platter-' + Date.now().toString(36), name:'New platter', price:0, notice:0, soldOut:false, tag:'', img:'images/platter-new.jpg', items:[] });
+  else if(x === 'dp'){ if(!confirm('Delete this platter?')) return; state.platters.splice(i, 1); }
+  else if(x === 'ac') state.combos.push({ base:'New', sub:'', price:0, notice:0, proteins:[{ name:'Chicken' }] });
+  else if(x === 'dc'){ if(!confirm('Delete this combo?')) return; state.combos.splice(i, 1); }
+  else if(x === 'ar') state.combos[i].proteins.push({ name:'New protein' });
+  else if(x === 'dr') state.combos[i].proteins.splice(j, 1);
+  markDirty(); render();
+});
+
+function busy(btn, on){ btn.disabled = on; btn.style.opacity = on ? .5 : 1; }
+async function saveDraft(){
+  var r = await sb.from('menu_draft').upsert({ id:1, data:state, updated_at:new Date().toISOString() });
+  if(r.error){ msg('Could not save: ' + r.error.message, false); return false; }
+  dirty = false; flag('Draft saved', ''); return true;
+}
+$('save').onclick = async function(){ busy(this, true); if(await saveDraft()) msg('Draft saved. Customers do not see it until you publish.', true); busy(this, false); };
+$('publish').onclick = async function(){
+  if(!confirm('Publish this menu to the live site?')) return;
+  busy(this, true);
+  if(await saveDraft()){
+    var r = await sb.from('menu_published').upsert({ id:1, data:state, updated_at:new Date().toISOString() });
+    if(r.error) msg('Publish failed: ' + r.error.message, false); else { flag('Published', ''); msg('Published. The live site now shows this menu.', true); }
+  }
+  busy(this, false);
+};
+
+async function open(){
+  $('login').hidden = true; $('app').hidden = false;
+  var r = await sb.from('menu_draft').select('data').eq('id', 1).single();
+  var d = r.data && r.data.data;
+  state = (d && d.platters && d.combos) ? d : JSON.parse(JSON.stringify(DEFAULT_MENU));
+  state.settings = Object.assign({}, DEFAULT_MENU.settings, state.settings);
+  render(); flag(d && d.platters ? 'Draft loaded' : 'Starting from the built-in menu. Save to keep it.', '');
+}
+$('go').onclick = async function(){
+  var btn = this, e = $('lerr'); e.hidden = true; busy(btn, true);
+  var r = await sb.auth.signInWithPassword({ email:$('em').value.trim(), password:$('pw').value });
+  busy(btn, false);
+  if(r.error){ e.textContent = 'Wrong email or password.'; e.hidden = false; return; }
+  open();
+};
+$('pw').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('go').click(); });
+$('out').onclick = async function(){ await sb.auth.signOut(); location.reload(); };
+window.addEventListener('beforeunload', function(e){ if(dirty){ e.preventDefault(); e.returnValue = ''; } });
+sb.auth.getSession().then(function(r){ if(r.data.session) open(); });
+</script>
+</body>
+</html>
