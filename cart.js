@@ -1,27 +1,23 @@
-var WHATSAPP = '2347036071865', CART_KEY = 'ik_cart_v1', INFO_KEY = 'ik_info_v1', OPEN_H = 11, CLOSE_H = 18;
+var CART_KEY = 'ik_cart_v1', INFO_KEY = 'ik_info_v1';
 
-/* Menu data. "notice" = hours of advance notice needed (0 = same day). The admin panel will replace this later. */
-var MENU = {
-  platters: [
-    { id:'platter-x', name:'X (Standard)', price:45000, notice:0, img:'images/platter-standard.png', items:['5 bole','Yam','Chicken','Turkey'] },
-    { id:'platter-xx', name:'Xx (Supreme)', price:82000, notice:0, tag:'Most shared', img:'images/platter-supreme.png', items:['8 bole','Yam','Chicken','Turkey','Suya','Goat meat'] },
-    { id:'platter-grammy', name:'Grammy Standard', price:150000, notice:0, img:'images/platter-grammy.png', items:['12 bole','Yam','Chicken','Turkey','Suya','Goat meat','Snail'] }
-  ],
-  combos: [
-    { base:'Bole', sub:'Roasted plantain', price:15000, notice:0, proteins:['Chicken','Turkey','Suya','Goat Meat','Snail'] },
-    { base:'Yam', sub:'Roasted or fried yam', price:15000, notice:0, proteins:['Chicken','Turkey','Suya','Goat Meat','Snail'] }
-  ]
-};
-
-function naira(n){ return '\u20A6' + Number(n).toLocaleString('en-NG'); }
-function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
-function slug(s){ return String(s).toLowerCase().replace(/\s+/g,'-'); }
 function load(k, d){ try{ return JSON.parse(localStorage.getItem(k)) || d; }catch(e){ return d; } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 
+function mins(t){ var a = t.split(':'); return +a[0] * 60 + (+a[1] || 0); }
+function fmt(t){ var a = t.split(':'), h = +a[0], m = +a[1] || 0, s = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return h + (m ? ':' + ('0' + m).slice(-2) : '') + s; }
+function updateBadges(){
+  var s = MENU.settings, now = 0;
+  new Intl.DateTimeFormat('en-GB',{hour:'numeric',minute:'numeric',hour12:false,timeZone:'Africa/Lagos'}).formatToParts(new Date()).forEach(function(p){
+    if(p.type === 'hour') now += (+p.value % 24) * 60; if(p.type === 'minute') now += +p.value; });
+  var open = now >= mins(s.open) && now < mins(s.close), label = s.paused ? 'Orders paused' : (open ? 'Open now' : 'Closed. Opens ' + fmt(s.open));
+  document.querySelectorAll('.open-badge').forEach(function(b){ b.textContent = label; b.classList.remove('is-open','is-closed'); b.classList.add(open && !s.paused ? 'is-open' : 'is-closed'); });
+  document.querySelectorAll('[data-hours]').forEach(function(e){ e.textContent = fmt(s.open) + ' to ' + fmt(s.close); });
+}
+
 /* ---------- shell: open/closed badge + mobile drawer ---------- */
 function initReveal(){
-  var els = document.querySelectorAll('.platter-grid>*,.combo-grid>*,.menu-grid>*,.gallery figure,.steps li,.quotes blockquote');
+  var els = Array.prototype.filter.call(document.querySelectorAll('.platter-grid>*,.combo-grid>*,.menu-grid>*,.gallery figure,.steps li,.quotes blockquote'), function(el){ return !el.dataset.rv; });
+  els.forEach(function(el){ el.dataset.rv = 1; });
   els.forEach(function(el,i){ el.classList.add('rv'); el.style.transitionDelay = (i % 3) * 110 + 'ms'; });
   function settle(el){ setTimeout(function(){ el.classList.remove('rv','in'); el.style.transitionDelay = ''; }, 1300); }
   if(!('IntersectionObserver' in window)){ els.forEach(function(el){ el.classList.remove('rv'); }); return; }
@@ -30,12 +26,7 @@ function initReveal(){
 }
 
 function initShell(){
-  var h = parseInt(new Intl.DateTimeFormat('en-GB',{hour:'numeric',hour12:false,timeZone:'Africa/Lagos'}).format(new Date()),10);
-  var open = h >= OPEN_H && h < CLOSE_H;
-  document.querySelectorAll('.open-badge').forEach(function(b){
-    b.textContent = open ? 'Open now' : 'Closed. Opens 11am';
-    b.classList.add(open ? 'is-open' : 'is-closed');
-  });
+  updateBadges();
   initReveal();
   var hb = document.getElementById('hamburger'), dr = document.getElementById('drawer'), ov = document.getElementById('drawer-overlay');
   if(!hb || !dr) return;
@@ -130,6 +121,7 @@ function initCart(){
   $('checkout-btn').onclick = function(){
     var err = $('cart-err'), needsWhen = !$('when-wrap').hidden;
     err.hidden = true;
+    if(MENU.settings && MENU.settings.paused){ err.textContent = MENU.settings.pauseMessage || 'We are not taking orders right now. Please check back soon.'; err.hidden = false; return; }
     if(!area.value.trim()){ err.textContent = 'Add your delivery area so we can quote the fee.'; err.hidden = false; area.focus(); return; }
     if(needsWhen && !when.value){ err.textContent = 'Choose a date and time for the items that need notice.'; err.hidden = false; when.focus(); return; }
     var sub = 0, lines = ['Hi Inflammation Kitchen, I would like to order:', ''];
@@ -143,4 +135,4 @@ function initCart(){
   render();
 }
 
-document.addEventListener('DOMContentLoaded', function(){ initShell(); initCart(); });
+document.addEventListener('DOMContentLoaded', function(){ initShell(); initCart(); window.menuReady.then(updateBadges); });

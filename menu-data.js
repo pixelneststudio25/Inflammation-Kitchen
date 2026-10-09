@@ -1,15 +1,15 @@
 /* ===== Settings: paste your Supabase values here (anon public key only, never the service_role key) ===== */
-var SUPABASE_URL = 'PASTE_YOUR_PROJECT_URL';
-var SUPABASE_ANON_KEY = 'PASTE_YOUR_ANON_PUBLIC_KEY';
+var SUPABASE_URL = 'https://vcvgfbsrngmdvnjhfbdv.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjdmdmYnNybmdtZHZuamhmYmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDM0MDgsImV4cCI6MjEwNzExOTQwOH0.33TTouxRDSD2z40Gmer1wN67b4jYaVlmLN-y5RGUXOo';
 var WHATSAPP = '2347036071865';
 
 /* Built-in menu, used until a menu is published from the admin panel. notice = hours of advance notice (0 = same day). */
 var DEFAULT_MENU = {
   settings: { open:'11:00', close:'18:00', paused:false, pauseMessage:'' },
   platters: [
-    { id:'platter-x', name:'X (Standard)', price:45000, notice:0, soldOut:false, tag:'', img:'images/platter-standard.jpg', items:['5 bole','Yam','Chicken','Turkey'] },
-    { id:'platter-xx', name:'Xx (Supreme)', price:82000, notice:0, soldOut:false, tag:'Most shared', img:'images/platter-supreme.jpg', items:['8 bole','Yam','Chicken','Turkey','Suya','Goat meat'] },
-    { id:'platter-grammy', name:'Grammy Standard', price:150000, notice:0, soldOut:false, tag:'', img:'images/platter-grammy.jpg', items:['12 bole','Yam','Chicken','Turkey','Suya','Goat meat','Snail'] }
+    { id:'platter-x', name:'X (Standard)', price:45000, notice:0, soldOut:false, tag:'', img:'images/platter-standard.png', items:['5 bole','Yam','Chicken','Turkey'] },
+    { id:'platter-xx', name:'Xx (Supreme)', price:82000, notice:0, soldOut:false, tag:'Most shared', img:'images/platter-supreme.png', items:['8 bole','Yam','Chicken','Turkey','Suya','Goat meat'] },
+    { id:'platter-grammy', name:'Grammy Standard', price:150000, notice:0, soldOut:false, tag:'', img:'images/platter-grammy.png', items:['12 bole','Yam','Chicken','Turkey','Suya','Goat meat','Snail'] }
   ],
   combos: [
     { base:'Bole', sub:'Roasted plantain', price:15000, notice:0, proteins:[{name:'Chicken'},{name:'Turkey'},{name:'Suya'},{name:'Goat Meat'},{name:'Snail'}] },
