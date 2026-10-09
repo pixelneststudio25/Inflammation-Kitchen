@@ -23,7 +23,7 @@ header.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);bac
 .open-badge.is-open::before{background:#2E8B57}.open-badge.is-closed::before{background:var(--red)}
 
 .hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;min-height:calc(100svh - 72px);padding:96px 0 56px;color:#fff;background:#14382B}
-.hero::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,20,15,.30) 0%,rgba(8,20,15,.50) 38%,rgba(6,15,11,.93) 100%),url('images/hero.png') center/cover no-repeat;animation:heroSettle 1.8s var(--ease) both}
+.hero::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(8,20,15,.30) 0%,rgba(8,20,15,.50) 38%,rgba(6,15,11,.93) 100%),url('images/hero.jpeg') center/cover no-repeat;animation:heroSettle 1.8s var(--ease) both}
 .hero-in{width:100%}
 .hero h1{font-size:clamp(2.8rem,10vw,5.8rem);color:#fff;max-width:11ch}
 .hero p.lead{margin:20px 0 28px;max-width:46ch;color:rgba(255,255,255,.88);font-size:1.08rem}
