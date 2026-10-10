@@ -22,12 +22,18 @@ function naira(n){ return '\u20A6' + Number(n).toLocaleString('en-NG'); }
 function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
 function slug(s){ return String(s).toLowerCase().replace(/\s+/g,'-'); }
 
+/* One shared Supabase client for the whole page (avoids the "multiple GoTrueClient" warning) */
+function getSb(){
+  if(!window.__sb && window.supabase && SUPABASE_URL.indexOf('PASTE') !== 0){ window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  return window.__sb;
+}
+
 /* Loads the published menu from Supabase. Falls back to the built-in menu if anything is missing or slow. */
 window.menuReady = (function(){
   var load = new Promise(function(done){
     if(!window.supabase || SUPABASE_URL.indexOf('PASTE') === 0) return done();
     try{
-      window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY).from('menu_published').select('data').eq('id',1).single().then(function(r){
+      getSb().from('menu_published').select('data').eq('id',1).single().then(function(r){
         var d = r && r.data && r.data.data;
         if(d && d.platters && d.combos){ MENU = d; MENU.settings = Object.assign({}, DEFAULT_MENU.settings, d.settings); }
         done();
@@ -51,7 +57,7 @@ function platterCardHTML(p){
 function comboBuilderHTML(c){
   var first = c.proteins.filter(function(p){ return !p.soldOut; })[0];
   var chips = c.proteins.map(function(p){
-    return '<label><input type="radio" name="' + slug(c.base) + '" value="' + esc(p.name) + '"' + (p.soldOut ? ' disabled' : '') + (first && p.name === first.name ? ' checked' : '') + '><span>' + esc(p.name) + (p.soldOut ? ' (sold out)' : '') + '</span></label>';
+    return '<label><input type="radio" name="' + slug(c.base) + '" value="' + esc(p.name) + '" data-img="' + esc(p.img || '') + '"' + (p.soldOut ? ' disabled' : '') + (first && p.name === first.name ? ' checked' : '') + '><span>' + esc(p.name) + (p.soldOut ? ' (sold out)' : '') + '</span></label>';
   }).join('');
   return '<article class="combo" data-base="' + esc(c.base) + '" data-price="' + c.price + '" data-notice="' + (c.notice || 0) + '"><div class="c-img"><img src="" alt="' + esc(c.base) + ' combo" loading="lazy"></div><div class="c-body"><h3>' + esc(c.base) + ' combo</h3><p class="sub">' + esc(c.sub) + '</p>' +
     '<fieldset class="chips"><legend>Pick your protein</legend>' + chips + '</fieldset><div class="p-foot"><span class="price">' + naira(c.price) + '</span><button class="add combo-add"' + (first ? '' : ' disabled') + '>' + (first ? 'Add to order' : 'Sold out') + '</button></div></div></article>';
@@ -64,13 +70,13 @@ function initComboBuilders(root){
       var p = on.value;
       btn.dataset.id = slug(base) + '-' + slug(p); btn.dataset.name = base + ' and ' + p;
       btn.dataset.price = card.dataset.price; btn.dataset.notice = card.dataset.notice;
-      img.src = 'images/' + slug(base) + '-' + slug(p) + '.jpg';
+      img.src = on.dataset.img || ('images/' + slug(base) + '-' + slug(p) + '.jpg');
     }
     card.addEventListener('change', sync); sync();
   });
 }
 function proteinCardHTML(c, p){
   var id = slug(c.base) + '-' + slug(p.name), nm = c.base + ' and ' + p.name;
-  return '<article class="platter' + (p.soldOut ? ' is-sold' : '') + '"><div class="p-img"><img src="images/' + id + '.jpg" alt="' + esc(nm) + '" loading="lazy"></div><div class="p-body"><h3>' + esc(nm) + '</h3>' +
+  return '<article class="platter' + (p.soldOut ? ' is-sold' : '') + '"><div class="p-img"><img src="' + esc(p.img || ('images/' + id + '.jpg')) + '" alt="' + esc(nm) + '" loading="lazy"></div><div class="p-body"><h3>' + esc(nm) + '</h3>' +
     (c.notice ? '<span class="tag">Order ' + c.notice + 'h ahead</span>' : '') + '<div class="p-foot"><span class="price">' + naira(c.price) + '</span>' + addBtn(id, nm, c.price, c.notice, p.soldOut) + '</div></div></article>';
 }
